@@ -1,0 +1,20 @@
+//---------------------------------------------------------------------------
+
+#ifndef RegistrationFormH
+#define RegistrationFormH
+//---------------------------------------------------------------------------
+#include <System.Classes.hpp>
+#include <FMX.Controls.hpp>
+#include <FMX.Forms.hpp>
+//---------------------------------------------------------------------------
+class TMyRegistrationForm : public TForm
+{
+__published:	// IDE-managed Components
+private:	// User declarations
+public:		// User declarations
+	__fastcall TMyRegistrationForm(TComponent* Owner);
+};
+//---------------------------------------------------------------------------
+extern PACKAGE TMyRegistrationForm *MyRegistrationForm;
+//---------------------------------------------------------------------------
+#endif
