@@ -16,13 +16,16 @@ class TMyRegistrationForm : public TForm
 __published:	// IDE-managed Components
 	TEdit *nameEdit;
 	TLabel *Label1;
-	TEdit *ageEdit;
+	TEdit *emailEdit;
 	TLabel *Label2;
 	TEdit *usernameEdit;
 	TLabel *Label3;
 	TEdit *passwordEdit;
 	TLabel *Label4;
 	TButton *SaveButton;
+	TEdit *passwordConfirmEdit;
+	TLabel *Label5;
+	TLabel *messageLabel;
 	void __fastcall SaveButtonClick(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
