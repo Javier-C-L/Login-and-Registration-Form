@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 
 #ifndef MainFormH
 #define MainFormH
@@ -15,6 +15,7 @@ class TMyMainForm : public TForm
 __published:	// IDE-managed Components
 	TButton *loginRegistrationButton;
 	TButton *registrationNavigationButton;
+	TLabel *messageLabel;
 	void __fastcall loginRegistrationButtonClick(TObject *Sender);
 	void __fastcall registrationNavigationButtonClick(TObject *Sender);
 private:	// User declarations
