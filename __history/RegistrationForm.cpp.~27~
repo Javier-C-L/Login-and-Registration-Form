@@ -5,8 +5,15 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <locale>
 #pragma hdrstop
 
+#include <System.Hash.hpp>
+/*
+#include <IdHashMessageDigest.hpp>
+#include <IdSSLOpenSSLHeaders.hpp>
+#include <IdHashSHA.hpp>
+*/
 #include "RegistrationForm.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
@@ -33,6 +40,21 @@ bool checkTextEmpty(AnsiString name, AnsiString email, AnsiString username,
 					 std::strcmp(convertToCharPtr(passwordConfirm), "") == 0 ;
 
 	return textEmpty ;
+}
+
+bool checkCommas(AnsiString name, AnsiString email, AnsiString username,
+					AnsiString password)
+{
+	std::string nameStr = convertToCharPtr(name) ;
+	std::string emailStr = convertToCharPtr(email) ;
+	std::string usernameStr = convertToCharPtr(username) ;
+	std::string passwordStr = convertToCharPtr(password) ;
+	bool commaFound = (nameStr.find(',') != std::string::npos) ||
+				 (emailStr.find(',') != std::string::npos) ||
+				 (usernameStr.find(',') != std::string::npos) ||
+				 (passwordStr.find(',') != std::string::npos) ;
+
+	return commaFound ;
 }
 
 bool checkStringSize(AnsiString string) {
@@ -81,15 +103,20 @@ bool checkUsernameAvailable(AnsiString usernameNew) {
 		}
 
 		myFile.close() ;
+
 	}
 
 	return usernameFound ;
 }
 
+AnsiString hashUserInfo(AnsiString info) {
+	UnicodeString infoHash = THashSHA2::GetHashString(info, THashSHA2::TSHA2Version::SHA256);
+	AnsiString infoHashAnsi = infoHash ;
+	return infoHashAnsi ;
+}
+
 void __fastcall TMyRegistrationForm::SaveButtonClick(TObject *Sender)
 {
-	fstream myFile ;
-	myFile.open("registeredUsers.txt", ios::app) ;
 
     AnsiString name = nameEdit->Text ;
 	AnsiString email = emailEdit->Text ;
@@ -99,6 +126,9 @@ void __fastcall TMyRegistrationForm::SaveButtonClick(TObject *Sender)
 
 	if (checkTextEmpty(name, email, username, password, passwordConfirm)) {
 		messageLabel->Text = "Please fill out all forms before continuing." ;
+	}
+	else if (checkCommas(name, email, username, password)) {
+		messageLabel->Text = "Forms cannot contain commas." ;
 	}
 	else if (checkStringSize(username)) {
 		messageLabel->Text = "Username must be 8 to 20 characters long." ;
@@ -110,19 +140,27 @@ void __fastcall TMyRegistrationForm::SaveButtonClick(TObject *Sender)
 		messageLabel->Text = "Password must be 8 to 20 characters long." ;
 	}
 	else if (std::strcmp(convertToCharPtr(passwordEdit->Text), convertToCharPtr(passwordConfirmEdit->Text)) != 0) {
-		messageLabel->Text = "Passwords do not match. Please reenter and try again." ;
+		messageLabel->Text = "Passwords do not match." ;
 	}
 	else {
+		fstream myFile ;
+		myFile.open("registeredUsers.txt", ios::app) ;
+
 		if (myFile.is_open()) {
-			myFile << name << "," << email << "," << username << "," << password << "\n" ;
+			/*
+			std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+			const std::wstring wide_string = L"This is a string";
+			const std::string utf8_string = converter.to_bytes(wide_string);
+			*/
+
+			myFile << hashUserInfo(name) << "," << hashUserInfo(email) << ","
+				   << hashUserInfo(username) << "," << hashUserInfo(password) << "\n" ;
 			myFile.close() ;
 			messageLabel->Text = "User registered successfully!." ;
 
 			Close() ;
 		}
 	}
-
-	myFile.close() ;
 }
 //---------------------------------------------------------------------------
 

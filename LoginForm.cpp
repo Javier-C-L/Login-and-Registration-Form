@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <System.Hash.hpp>
 #pragma hdrstop
 
 #include "LoginForm.h"
@@ -34,6 +35,12 @@ const char* convertToCharPtr(AnsiString ansiStr) {
 	return ansiStr.c_str() ;
 }
 
+AnsiString hashUserInfo(AnsiString info) {
+	UnicodeString infoHash = THashSHA2::GetHashString(info, THashSHA2::TSHA2Version::SHA256);
+	AnsiString infoHashAnsi = infoHash ;
+	return infoHashAnsi ;
+}
+
 //---------------------------------------------------------------------------
 void __fastcall TMyLoginForm::LoginButtonClick(TObject *Sender)
 {
@@ -51,14 +58,18 @@ void __fastcall TMyLoginForm::LoginButtonClick(TObject *Sender)
 			// AnsiString editUsername = usernameEdit->Text ;
 			// const char* usernameString = editUsername.c_str() ;
 
-			if (std::strcmp(username, convertToCharPtr(usernameEdit->Text)) == 0) {
+			AnsiString usernameEditHash = hashUserInfo(usernameEdit->Text) ;
+
+			if (std::strcmp(username, convertToCharPtr(usernameEditHash)) == 0) {
 
 				const char* password = parsedLine.at(3).c_str() ;
 
 				// AnsiString editPassword = passwordEdit->Text ;
 				// const char* passwordString = editPassword.c_str() ;
 
-				if (std::strcmp(password, convertToCharPtr(passwordEdit->Text)) == 0) {
+				AnsiString passwordEditHash = hashUserInfo(passwordEdit->Text) ;
+
+				if (std::strcmp(password, convertToCharPtr(passwordEditHash)) == 0) {
 					loginSuccess = true ;
 				}
 

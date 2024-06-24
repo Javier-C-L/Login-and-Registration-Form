@@ -5,8 +5,15 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <locale>
 #pragma hdrstop
 
+#include <System.Hash.hpp>
+/*
+#include <IdHashMessageDigest.hpp>
+#include <IdSSLOpenSSLHeaders.hpp>
+#include <IdHashSHA.hpp>
+*/
 #include "RegistrationForm.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
@@ -19,6 +26,66 @@ __fastcall TMyRegistrationForm::TMyRegistrationForm(TComponent* Owner)
 }
 //---------------------------------------------------------------------------
 
+// Function declarations
+const char* convertToCharPtr(AnsiString ansiStr) ;
+AnsiString hashUserInfo(AnsiString info) ;
+bool checkTextEmpty(AnsiString name, AnsiString email, AnsiString username,
+					AnsiString password, AnsiString passwordConfirm) ;
+bool checkCommas(AnsiString name, AnsiString email, AnsiString username,
+					AnsiString password) ;
+bool checkStringSize(AnsiString string) ;
+std::vector<std::string> parseCommaDelimitedString(std::string line) ;
+bool checkUsernameAvailable(AnsiString usernameNew) ;
+AnsiString hashUserInfo(AnsiString info) ;
+
+void __fastcall TMyRegistrationForm::SaveButtonClick(TObject *Sender)
+{
+
+    AnsiString name = nameEdit->Text ;
+	AnsiString email = emailEdit->Text ;
+	AnsiString username = usernameEdit->Text ;
+	AnsiString password = passwordEdit->Text ;
+	AnsiString passwordConfirm = passwordConfirmEdit->Text ;
+
+	if (checkTextEmpty(name, email, username, password, passwordConfirm)) {
+		messageLabel->Text = "Please fill out all forms before continuing." ;
+	}
+	else if (checkCommas(name, email, username, password)) {
+		messageLabel->Text = "Forms cannot contain commas." ;
+	}
+	else if (checkStringSize(username)) {
+		messageLabel->Text = "Username must be 8 to 20 characters long." ;
+	}
+	else if (checkUsernameAvailable(username)) {
+		messageLabel->Text = "Username already in use." ;
+	}
+	else if (checkStringSize(password)) {
+		messageLabel->Text = "Password must be 8 to 20 characters long." ;
+	}
+	else if (std::strcmp(convertToCharPtr(passwordEdit->Text), convertToCharPtr(passwordConfirmEdit->Text)) != 0) {
+		messageLabel->Text = "Passwords do not match." ;
+	}
+	else {
+		fstream myFile ;
+		myFile.open("registeredUsers.txt", ios::app) ;
+
+		if (myFile.is_open()) {
+			/*
+			std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+			const std::wstring wide_string = L"This is a string";
+			const std::string utf8_string = converter.to_bytes(wide_string);
+			*/
+
+			myFile << hashUserInfo(name) << "," << hashUserInfo(email) << ","
+				   << hashUserInfo(username) << "," << hashUserInfo(password) << "\n" ;
+			myFile.close() ;
+			messageLabel->Text = "User registered successfully!." ;
+
+			Close() ;
+		}
+	}
+}
+//---------------------------------------------------------------------------
 const char* convertToCharPtr(AnsiString ansiStr)
 {
 	return ansiStr.c_str() ;
@@ -87,7 +154,9 @@ bool checkUsernameAvailable(AnsiString usernameNew) {
 			// AnsiString editUsername = usernameEdit->Text ;
 			// const char* usernameString = editUsername.c_str() ;
 
-			if (std::strcmp(convertToCharPtr(usernameNew), username) == 0) {
+			AnsiString usernameNewHash = hashUserInfo(usernameNew) ;
+
+			if (std::strcmp(convertToCharPtr(usernameNewHash), username) == 0) {
 
 				usernameFound = true ;
 
@@ -102,45 +171,8 @@ bool checkUsernameAvailable(AnsiString usernameNew) {
 	return usernameFound ;
 }
 
-void __fastcall TMyRegistrationForm::SaveButtonClick(TObject *Sender)
-{
-
-    AnsiString name = nameEdit->Text ;
-	AnsiString email = emailEdit->Text ;
-	AnsiString username = usernameEdit->Text ;
-	AnsiString password = passwordEdit->Text ;
-	AnsiString passwordConfirm = passwordConfirmEdit->Text ;
-
-	if (checkTextEmpty(name, email, username, password, passwordConfirm)) {
-		messageLabel->Text = "Please fill out all forms before continuing." ;
-	}
-	else if (checkCommas(name, email, username, password)) {
-		messageLabel->Text = "Forms cannot contain commas." ;
-	}
-	else if (checkStringSize(username)) {
-		messageLabel->Text = "Username must be 8 to 20 characters long." ;
-	}
-	else if (checkUsernameAvailable(username)) {
-		messageLabel->Text = "Username already in use." ;
-	}
-	else if (checkStringSize(password)) {
-		messageLabel->Text = "Password must be 8 to 20 characters long." ;
-	}
-	else if (std::strcmp(convertToCharPtr(passwordEdit->Text), convertToCharPtr(passwordConfirmEdit->Text)) != 0) {
-		messageLabel->Text = "Passwords do not match." ;
-	}
-	else {
-		fstream myFile ;
-		myFile.open("registeredUsers.txt", ios::app) ;
-
-		if (myFile.is_open()) {
-			myFile << name << "," << email << "," << username << "," << password << "\n" ;
-			myFile.close() ;
-			messageLabel->Text = "User registered successfully!." ;
-
-			Close() ;
-		}
-	}
+AnsiString hashUserInfo(AnsiString info) {
+	UnicodeString infoHash = THashSHA2::GetHashString(info, THashSHA2::TSHA2Version::SHA256);
+	AnsiString infoHashAnsi = infoHash ;
+	return infoHashAnsi ;
 }
-//---------------------------------------------------------------------------
-
